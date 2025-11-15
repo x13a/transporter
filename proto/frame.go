@@ -61,18 +61,18 @@ const (
 // decoder still consumes the reserved bytes, which keeps the framing fixed and
 // easy to extend.
 type Frame struct {
-	Version  uint8
-	Command  Command
-	Proto    Protocol
-	Flags    Flags
-	Checksum uint32
-	Stream   uint32
+	Version uint8
+	Command Command
+	Proto   Protocol
+	Flags   Flags
+	Stream  uint32
 
 	TargetAddress string
 	TargetPort    uint16
 
-	Payload []byte
-	Error   string
+	Error    string
+	Payload  []byte
+	Checksum uint32
 }
 
 // Validate checks whether the frame complies with invariants that keep the proxy sane.
