@@ -24,7 +24,7 @@ both directions.
 | 0 | 1 | Version (`0x01`) |
 | 1 | 1 | Command (`open`, `data`, `close`, `error`) |
 | 2 | 1 | Protocol (`tcp` or `udp`) |
-| 3 | 1 | Flags (reserved) |
+| 3 | 1 | Flags (bit field; e.g., `FlagChecksum`) |
 | 4 | 4 | `StreamID` |
 | 8 | 2 | Target address length |
 | 10 | N | Target address (UTF-8) |
@@ -33,6 +33,7 @@ both directions.
 | … | M | Error string (if present) |
 | … | 4 | Payload length |
 | … | P | Payload bytes |
+| … | 4 (optional) | Checksum (CRC32 when `FlagChecksum` set) |
 
 The payload is limited to 1 MiB per frame to keep memory usage predictable.
 
@@ -91,6 +92,38 @@ Instead of passing long flag lists, provide a JSON config via `-config=/path/fil
 
 Sample configs are available under `config/<transport>/client.json|server.json` for every
 built-in transport.
+
+### Writing a transport
+
+Transports register themselves at init-time via `transport.Register`. Creating a new
+transport is as simple as implementing the `transport.Factory` interface:
+
+```go
+type coolFactory struct{}
+
+func init() {
+    transport.Register(&coolFactory{})
+}
+
+func (f *coolFactory) Name() string { return "cool" }
+func (f *coolFactory) AddFlags(fs *flag.FlagSet) {
+    // expose transport-specific CLI flags (optional)
+}
+func (f *coolFactory) Describe(role transport.Role) string {
+    return "cool transport " + role.String()
+}
+func (f *coolFactory) Open(ctx context.Context, role transport.Role) (transport.FrameConn, error) {
+    // return a type that satisfies FrameConn (Send/Receive/Close)
+}
+```
+
+The `FrameConn` interface is the only contract: call `Receive` to get
+`*proto.Frame`, call `Send` to forward frames to the remote side. Because all frame
+metadata (target host, port, protocol, payload) is self-contained, you do not need to
+modify the client or server packages to introduce a new transport implementation.
+Reserved flag bits (`frame.Flags`) provide future extensibility: transports that
+eventually need compression or per-frame checksums can set those bits once the feature
+is defined, without changing the framing layout.
 
 ## Testing
 

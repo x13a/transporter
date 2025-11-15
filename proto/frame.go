@@ -16,18 +16,28 @@ const MaxPayloadLen = 1 << 20 // 1MiB per frame is enough for proxy data chunks.
 type Command uint8
 
 const (
-	CommandOpen  Command = 1
-	CommandData  Command = 2
-	CommandClose Command = 3
-	CommandError Command = 4
+	CommandOpen Command = iota + 1
+	CommandData
+	CommandClose
+	CommandError
 )
 
 // Protocol identifies which transport protocol is carried inside the tunnel.
 type Protocol uint8
 
 const (
-	ProtocolTCP Protocol = 1
-	ProtocolUDP Protocol = 2
+	ProtocolTCP Protocol = iota + 1
+	ProtocolUDP
+)
+
+// Flags provide extensibility knobs that transports can opt into (compression,
+// checksums, etc.). They are kept in the frame so transports don't need
+// transport-specific headers.
+type Flags uint8
+
+const (
+	FlagCompressed Flags = 1 << iota
+	FlagChecksum
 )
 
 // Frame is the basic unit exchanged between the client-side SOCKS proxy and
@@ -36,7 +46,7 @@ const (
 //	byte 0   : Version
 //	byte 1   : Command
 //	byte 2   : Protocol
-//	byte 3   : Flags (reserved for future use)
+//	byte 3   : Flags (bit field)
 //	byte 4-7 : Stream ID (uint32, big endian)
 //	byte 8-9 : Address length N (uint16)
 //	byte 10..(10+N-1) : Address bytes
@@ -45,15 +55,18 @@ const (
 //	next M bytes      : Error string UTF-8
 //	next 4 bytes      : Payload length P (uint32)
 //	next P bytes      : Payload
+//	if Flags has FlagChecksum: next 4 bytes checksum (CRC32 of payload)
 //
 // Fields that are not relevant to a specific command may be left empty. The
 // decoder still consumes the reserved bytes, which keeps the framing fixed and
 // easy to extend.
 type Frame struct {
-	Version uint8
-	Command Command
-	Proto   Protocol
-	Stream  uint32
+	Version  uint8
+	Command  Command
+	Proto    Protocol
+	Flags    Flags
+	Checksum uint32
+	Stream   uint32
 
 	TargetAddress string
 	TargetPort    uint16
@@ -99,10 +112,6 @@ func putUint16(b []byte, v uint16) {
 
 func putUint32(b []byte, v uint32) {
 	binary.BigEndian.PutUint32(b, v)
-}
-
-func readUint8(buf []byte) uint8 {
-	return buf[0]
 }
 
 func readUint16(buf []byte) uint16 {

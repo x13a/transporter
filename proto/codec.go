@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"hash/crc32"
 	"io"
 	"sync"
 )
@@ -39,12 +40,16 @@ func (e *Encoder) WriteFrame(frame *Frame) error {
 	}
 
 	var header bytes.Buffer
-	header.Grow(18 + len(frame.TargetAddress) + len(frame.Error) + len(frame.Payload))
+	extra := 0
+	if frame.Flags&FlagChecksum != 0 {
+		extra += 4
+	}
+	header.Grow(18 + len(frame.TargetAddress) + len(frame.Error) + len(frame.Payload) + extra)
 
 	header.WriteByte(frame.Version)
 	header.WriteByte(byte(frame.Command))
 	header.WriteByte(byte(frame.Proto))
-	header.WriteByte(0) // Reserved flags for later use.
+	header.WriteByte(byte(frame.Flags))
 
 	tmp := make([]byte, 4)
 	putUint32(tmp, frame.Stream)
@@ -64,6 +69,14 @@ func (e *Encoder) WriteFrame(frame *Frame) error {
 	putUint32(tmp, uint32(len(frame.Payload)))
 	header.Write(tmp)
 	header.Write(frame.Payload)
+
+	if frame.Flags&FlagChecksum != 0 {
+		if frame.Checksum == 0 {
+			frame.Checksum = crc32.ChecksumIEEE(frame.Payload)
+		}
+		putUint32(tmp, frame.Checksum)
+		header.Write(tmp)
+	}
 
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -91,6 +104,7 @@ func (d *Decoder) ReadFrame() (*Frame, error) {
 		Version: h[0],
 		Command: Command(h[1]),
 		Proto:   Protocol(h[2]),
+		Flags:   Flags(h[3]),
 	}
 	if frame.Version != Version {
 		return nil, fmt.Errorf("unsupported frame version %d", frame.Version)
@@ -151,6 +165,22 @@ func (d *Decoder) ReadFrame() (*Frame, error) {
 			return nil, err
 		}
 		frame.Payload = payload
+	}
+
+	if frame.Flags&FlagChecksum != 0 {
+		sumBytes, err := readBytes(4)
+		if err != nil {
+			return nil, err
+		}
+		frame.Checksum = readUint32(sumBytes)
+		expected := crc32.ChecksumIEEE(frame.Payload)
+		if frame.Checksum != expected {
+			return nil, fmt.Errorf(
+				"frame checksum mismatch: got %08x want %08x",
+				frame.Checksum,
+				expected,
+			)
+		}
 	}
 
 	return frame, nil
