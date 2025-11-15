@@ -1,0 +1,7 @@
+{
+  "mode": "server",
+  "transport": "file",
+  "flags": {
+    "dir": "/tmp/transporter-share"
+  }
+}

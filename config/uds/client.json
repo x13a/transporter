@@ -1,0 +1,8 @@
+{
+  "mode": "client",
+  "socks": "127.0.0.1:1080",
+  "transport": "uds",
+  "flags": {
+    "path": "/tmp/transporter.sock"
+  }
+}

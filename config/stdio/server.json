@@ -1,0 +1,4 @@
+{
+  "mode": "server",
+  "transport": "stdio"
+}

@@ -1,0 +1,7 @@
+{
+  "mode": "server",
+  "transport": "tcp",
+  "flags": {
+    "bind": "127.0.0.1:9090"
+  }
+}

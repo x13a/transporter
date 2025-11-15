@@ -1,0 +1,7 @@
+{
+  "mode": "server",
+  "transport": "uds",
+  "flags": {
+    "path": "/tmp/transporter.sock"
+  }
+}

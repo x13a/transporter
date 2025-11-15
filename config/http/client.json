@@ -1,0 +1,9 @@
+{
+  "mode": "client",
+  "socks": "127.0.0.1:1080",
+  "transport": "http",
+  "verbose": false,
+  "flags": {
+    "dest": "http://127.0.0.1:8080"
+  }
+}

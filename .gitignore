@@ -1,0 +1,14 @@
+# Build artifacts
+bin/
+.gocache/
+tmp/
+
+# Go modules
+*.exe
+*.test
+*.out
+
+# OS/IDE files
+.DS_Store
+.idea/
+.vscode/

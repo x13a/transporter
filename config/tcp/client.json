@@ -1,0 +1,8 @@
+{
+  "mode": "client",
+  "socks": "127.0.0.1:1080",
+  "transport": "tcp",
+  "flags": {
+    "dest": "127.0.0.1:9090"
+  }
+}

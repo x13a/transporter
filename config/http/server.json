@@ -1,0 +1,8 @@
+{
+  "mode": "server",
+  "transport": "http",
+  "verbose": false,
+  "flags": {
+    "bind": "127.0.0.1:8080"
+  }
+}

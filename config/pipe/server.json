@@ -1,0 +1,8 @@
+{
+  "mode": "server",
+  "transport": "pipe",
+  "flags": {
+    "in": "/tmp/pipe_client.out",
+    "out": "/tmp/pipe_client.in"
+  }
+}
