@@ -127,49 +127,16 @@ is defined, without changing the framing layout.
 
 ## Testing
 
-- `go test ./...` runs unit tests plus in-memory TCP and UDP integration tests.
+- `go test ./...` runs unit tests.
 
 ### Make targets
 
 - `make` / `make build` — build all packages and emit `bin/transporter`.
 - `make test` — shorthand for `go test ./...`.
-- `make live-test` — sequentially executes every live transport test (TCP and UDP
-  variants) while automatically exporting all required `E2E_*` environment flags, so no
-  manual setup is needed.
 - `scripts/dev-run.sh` — convenience wrapper that launches both server and client locally
   (default HTTP transport). Pass `-t tcp|file|uds|pipe|stdio` (plus optional tuning flags)
   to quickly verify the proxy end-to-end; stop the script and it tears everything down
   and runs curl TCP/UDP smoke tests.
-
-Each live transport test can also be run individually by setting the matching flag and
-invoking `go test -run <TestName> ./...`:
-
-- `TestLiveHTTPTransportProxy` — `E2E_HTTP_ENABLE=1` (optional `E2E_HTTP_TARGET`),
-  verifies HTTP transport (TCP).
-- `TestLiveHTTPTransportUDPProxy` — `E2E_HTTP_UDP_ENABLE=1`, verifies HTTP transport
-  carrying UDP datagrams.
-- `TestLiveFileTransportProxy` — `E2E_FILE_ENABLE=1` (optional `E2E_FILE_TARGET`),
-  validates the shared folder transport (TCP).
-- `TestLiveFileTransportUDPProxy` — `E2E_FILE_UDP_ENABLE=1`, validates shared folder
-  transport (UDP).
-- `TestLiveTCPTransportProxy` — `E2E_TCP_ENABLE=1` (optional `E2E_TCP_TARGET`), checks the
-  raw TCP transport.
-- `TestLiveTCPTransportUDPProxy` — `E2E_TCP_UDP_ENABLE=1`, checks UDP-through-TCP.
-- `TestLiveUDSTransportProxy` — `E2E_UDS_ENABLE=1` (optional `E2E_UDS_TARGET`), covers UDS
-  transport (Unix only).
-- `TestLiveUDSTransportUDPProxy` — `E2E_UDS_UDP_ENABLE=1`, covers UDS transport for UDP
-  datagrams.
-
-Example:
-
-```bash
-export E2E_TCP_ENABLE=1
-go test -run TestLiveTCPTransportProxy ./...
-
-# Enable UDP HTTP transport test
-export E2E_HTTP_UDP_ENABLE=1
-go test -run TestLiveHTTPTransportUDPProxy ./...
-```
 
 ## License
 
